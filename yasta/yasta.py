@@ -47,6 +47,15 @@ def delete(command: str, path: str = typer.Option(default_path)):
 def run(
     command: str,
     path: str = typer.Option(default_path, "--path", "-p"),
+    capture_output: bool = typer.Option(
+        False,
+        "--caputre-output",
+        "-c",
+        help="""
+        Capturing output waits for the command to finish and then prints the output, coloring the output. \n
+        This wouldn't be useful if you're running a webserver and want to see the logs.
+        """,
+    ),
     ignore_failed: bool = typer.Option(
         False,
         "--force",
@@ -58,19 +67,19 @@ def run(
     commands = file[default_group]
     if not isinstance(commands, dict):
         return
-    errors = execute_toml(commands, command, ignore_failed)
+    errors = execute_toml(commands, command, ignore_failed, capture_output)
     if len(errors) == 0:
         print_bold(":white_heavy_check_mark: No errors occured", "green")
         return
     print_bold(f":x: {len(errors)} error(s) occured!", "red")
     table = Table(show_header=True, show_lines=True)
     table.add_column("Command")
-    table.add_column("Error")
+    table.add_column("Error") if capture_output else ...
     for error in errors:
-        table.add_row(
-            f"[bold red] {error['command']} [/bold red]",
-            f"[bold red] {error['error']} [/bold red]",
-        )
+        row = {"command": f"[bold red] {error['command']} [/bold red]"}
+        if capture_output:
+            row["error"] = f"[bold red] {error['error']} [/bold red]"
+        table.add_row(*row.values())
     console = Console()
     console.print(table)
 

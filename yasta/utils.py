@@ -32,7 +32,7 @@ def writetoml(path: str, content: tomltype) -> bool:
         return False
 
 
-def execute_shell_command(command: str, caputre_output: bool = True) -> ExecutionResult:
+def execute_shell_command(command: str, caputre_output: bool) -> ExecutionResult:
     result = subprocess.run(command, shell=True, capture_output=caputre_output)
     return {
         "command": result.args,
@@ -43,12 +43,17 @@ def execute_shell_command(command: str, caputre_output: bool = True) -> Executio
 
 
 def execute_toml(
-    commands: dict[str, allowedtypes], target: str, ignore_failed: bool
+    commands: dict[str, allowedtypes],
+    target: str,
+    ignore_failed: bool,
+    capture_output: bool,
 ) -> list[ExecutionResult]:
     target_to_execute = commands[target]
     print_bold(f"Running [blue]'{target}'[/blue] command", "yellow")
     errors: list[ExecutionResult] = []
-    execute_toml_commands(commands, target_to_execute, errors, ignore_failed)
+    execute_toml_commands(
+        commands, target_to_execute, errors, ignore_failed, capture_output
+    )
     return errors
 
 
@@ -57,15 +62,21 @@ def execute_toml_commands(
     current_command: str | list[str],
     errors: list,
     ignore_failed: bool,
+    capture_output: bool,
     indent: int = 1,
 ):
     if isinstance(current_command, str):
         if current_command in commands:
             execute_toml_commands(
-                commands, commands[current_command], errors, ignore_failed, indent + 2
+                commands,
+                commands[current_command],
+                errors,
+                ignore_failed,
+                capture_output,
+                indent + 2,
             )
         else:
-            result = execute_shell_command(current_command)
+            result = execute_shell_command(current_command, capture_output)
             if result["code"] == 0:
                 # Add spaces in case result is multiline
                 indented_output = result["output"].replace("\n", "\n" + " " * indent)
@@ -87,7 +98,9 @@ def execute_toml_commands(
                 "yellow",
                 indent,
             )
-            execute_toml_commands(commands, command, errors, ignore_failed, indent + 2)
+            execute_toml_commands(
+                commands, command, errors, ignore_failed, capture_output, indent + 2
+            )
             if len(errors) != 0 and not ignore_failed:
                 return
 
