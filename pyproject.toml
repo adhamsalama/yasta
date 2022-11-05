@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "yasta"
+version = "0.1.0"
+description = "A modern task runner."
+authors = ["Adham Salama <adhamsalama@zohomail.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/adhamsalama/yasta"
+repository = "https://github.com/adhamsalama/yasta"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+toml = "^0.10.2"
+typer = {extras = ["all"], version = "^0.6.1"}
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/adhamsalama/yasta/issues"
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.10.0"
+mypy = "^0.982"
+types-toml = "^0.10.8"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+yasta = "yasta.yasta:app"
