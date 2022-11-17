@@ -62,12 +62,13 @@ def run(
         "-f",
         help="Force running all commands by ignoring failed tests",
     ),
+    parallel: bool = typer.Option(False, help="Run tasks in parallel"),
 ):
     file = readtoml(path)
     commands = file[default_group]
     if not isinstance(commands, dict):
         return
-    errors = execute_toml(commands, command, ignore_failed, capture_output)
+    errors = execute_toml(commands, command, ignore_failed, capture_output, parallel)
     if len(errors) == 0:
         print_bold(":white_heavy_check_mark: No errors occured", "green")
         return
