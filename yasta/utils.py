@@ -1,5 +1,6 @@
 import subprocess
 from typing import TypedDict
+from concurrent.futures import ProcessPoolExecutor, wait, Future
 
 import toml
 import typer
@@ -47,12 +48,13 @@ def execute_toml(
     target: str,
     ignore_failed: bool,
     capture_output: bool,
+    parallel: bool,
 ) -> list[ExecutionResult]:
     target_to_execute = commands[target]
     print_bold(f"Running [blue]'{target}'[/blue] command", "yellow")
     errors: list[ExecutionResult] = []
     execute_toml_commands(
-        commands, target_to_execute, errors, ignore_failed, capture_output
+        commands, target_to_execute, errors, ignore_failed, capture_output, parallel
     )
     return errors
 
@@ -63,6 +65,7 @@ def execute_toml_commands(
     errors: list,
     ignore_failed: bool,
     capture_output: bool,
+    parallel: bool,
     indent: int = 1,
 ):
     if isinstance(current_command, str):
@@ -73,6 +76,7 @@ def execute_toml_commands(
                 errors,
                 ignore_failed,
                 capture_output,
+                parallel,
                 indent + 2,
             )
         else:
@@ -92,17 +96,58 @@ def execute_toml_commands(
                 )
                 return
     else:
-        for command in current_command:
-            print_bold(
-                f"Running [blue]'{command}'[/blue] command",
-                "yellow",
-                indent,
-            )
-            execute_toml_commands(
-                commands, command, errors, ignore_failed, capture_output, indent + 2
-            )
+        if parallel:
+            with ProcessPoolExecutor() as executor:
+                for command in current_command:
+                    executor.submit(
+                        execute_toml_command,
+                        commands,
+                        command,
+                        errors,
+                        ignore_failed,
+                        capture_output,
+                        parallel,
+                        indent,
+                    )
+
+        else:
+            for command in current_command:
+                execute_toml_command(
+                    commands,
+                    command,
+                    errors,
+                    ignore_failed,
+                    capture_output,
+                    parallel,
+                    indent,
+                )
             if len(errors) != 0 and not ignore_failed:
                 return
+
+
+def execute_toml_command(
+    commands: dict[str, allowedtypes],
+    command: str | list[str],
+    errors: list,
+    ignore_failed: bool,
+    capture_output: bool,
+    parallel: bool,
+    indent: int = 1,
+):
+    print_bold(
+        f"Running [blue]'{command}'[/blue] command",
+        "yellow",
+        indent,
+    )
+    execute_toml_commands(
+        commands,
+        command,
+        errors,
+        ignore_failed,
+        capture_output,
+        parallel,
+        indent + 2,
+    )
 
 
 def list_to_dict(commands: list[str]) -> dict[str, str | list[str]]:
