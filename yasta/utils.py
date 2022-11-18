@@ -121,8 +121,8 @@ def execute_toml_commands(
                     parallel,
                     indent,
                 )
-            if len(errors) != 0 and not ignore_failed:
-                return
+                if len(errors) != 0 and not ignore_failed:
+                    return
 
 
 def execute_toml_command(
